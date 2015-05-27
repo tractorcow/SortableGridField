@@ -6,13 +6,16 @@
  */
 class GridFieldSortableRows implements GridField_HTMLProvider, GridField_ActionProvider, GridField_DataManipulator {
 	protected $sortColumn;
+	protected $disable_selection=true;
 	protected $append_to_top=false;
-	
+
 	/**
 	 * @param String $sortColumn Column that should be used to update the sort information
+	 * @param bool   $disableSelection
 	 */
-	public function __construct($sortColumn) {
+	public function __construct($sortColumn, $disableSelection = true) {
 		$this->sortColumn = $sortColumn;
+		$this->disable_selection = $disableSelection;
 	}
 	
 	/**
@@ -76,11 +79,14 @@ class GridFieldSortableRows implements GridField_HTMLProvider, GridField_ActionP
 		
 		
 		//Inject Requirements
-		Requirements::css(SORTABLE_GRIDFIELD_BASE . '/css/GridFieldSortableRows.css');
-		Requirements::javascript(SORTABLE_GRIDFIELD_BASE . '/javascript/GridFieldSortableRows.js');
+		$custom = Config::inst()->get('GridFieldSortableRows', 'Base');
+		$base = $custom ?: SORTABLE_GRIDFIELD_BASE;
+
+		Requirements::css($base . '/css/GridFieldSortableRows.css');
+		Requirements::javascript($base . '/javascript/GridFieldSortableRows.js');
 		
 		
-		$args = array('Colspan' => count($gridField->getColumns()), 'ID' => $gridField->ID());
+		$args = array('Colspan' => count($gridField->getColumns()), 'ID' => $gridField->ID(), 'DisableSelection' => $this->disable_selection);
 		
 		return array('header' => $forTemplate->renderWith('GridFieldSortableRows', $args));
 	}
@@ -117,6 +123,15 @@ class GridFieldSortableRows implements GridField_HTMLProvider, GridField_ActionP
 	 */
 	public function setAppendToTop($value) {
 		$this->append_to_top=$value;
+		return $this;
+	}
+
+	/**
+	 * @param bool $value Boolean true to disable selection of table contents false to enable selection
+	 * @return GridFieldSortableRows Returns the current instance
+	 */
+	public function setDisableSelection($value){
+		$this->disable_selection = $value;
 		return $this;
 	}
 	
@@ -202,7 +217,7 @@ class GridFieldSortableRows implements GridField_HTMLProvider, GridField_ActionP
 			
 			$idCondition=null;
 			if($this->append_to_top && !($list instanceof RelationList)) {
-				$idCondition='"ID" IN(\''.implode("','", $list->getIDList()).'\')';
+				$idCondition='"ID" IN(\''.implode("','", $dataList->getIDList()).'\')';
 			}
 			
 			if($this->append_to_top) {
